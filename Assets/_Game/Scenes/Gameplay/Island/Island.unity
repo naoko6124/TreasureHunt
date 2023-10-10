@@ -155,9 +155,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aece7d321674f30ad26f683e1da704c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Width: 12
-  Height: 12
-  Length: 12
+  width: 16
+  height: 8
+  length: 16
+  fillHeight: 4
 --- !u!64 &18840216
 MeshCollider:
   m_ObjectHideFlags: 0

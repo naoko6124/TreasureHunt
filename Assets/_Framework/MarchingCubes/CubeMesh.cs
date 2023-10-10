@@ -12,8 +12,9 @@ namespace _Framework.MarchingCubes
             
             GeneratedMesh.Clear();
 
-            GeneratedMesh.vertices = global::MarchingCubes.LookupTables.CubeVertices;
-            GeneratedMesh.triangles = global::MarchingCubes.LookupTables.CubeConfigurations[cubeConfiguration];
+            GeneratedMesh.vertices = LookupTables.CubeVertices;
+            GeneratedMesh.uv = LookupTables.CubeUV;
+            GeneratedMesh.triangles = LookupTables.CubeConfigurations[cubeConfiguration];
         }
     }
 }

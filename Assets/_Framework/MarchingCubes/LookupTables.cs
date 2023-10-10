@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MarchingCubes
+namespace _Framework.MarchingCubes
 {
 	public static class LookupTables
 	{
@@ -20,6 +20,24 @@ namespace MarchingCubes
 		    new Vector3(0.5f, -0.5f,0.0f),
 		    new Vector3(0.5f, 0.5f,0.0f),
 		    new Vector3(-0.5f, 0.5f,0.0f),
+		};
+		
+		public static readonly Vector2[] CubeUV = new Vector2[]
+		{
+			new Vector2(0.0f,0.0f),
+			new Vector2(1.0f,0.0f),
+			new Vector2(0.0f,1.0f),
+			new Vector2(0.0f,0.0f),
+			
+			new Vector2(1.0f,0.0f),
+			new Vector2(1.0f,1.0f),
+			new Vector2(1.0f,1.0f),
+			new Vector2(0.0f,1.0f),
+			
+			new Vector2(0.0f,0.0f),
+			new Vector2(1.0f,0.0f),
+			new Vector2(1.0f,1.0f),
+			new Vector2(0.0f,1.0f),
 		};
 
 		public static readonly int[][] CubeConfigurations = new int[][]

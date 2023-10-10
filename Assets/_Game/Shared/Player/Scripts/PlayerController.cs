@@ -8,7 +8,7 @@ namespace _Game.Shared.Player.Scripts
         [Header("Movement")]
         [SerializeField] private float moveSpeed = 3.0f;
         [SerializeField] private float mouseSensitivity = 0.5f;
-        [SerializeField] private float gravity = -9.81f;
+        [SerializeField] private float gravity = -1.0f;
         private Vector2 _moveInput;
         private Vector2 _cameraInput;
         private float cameraRot = 0f;
