@@ -13,10 +13,7 @@ namespace _Framework.VoxelMap
         public int height;
         public int length;
 
-        [Header("Fill")]
-        public int fillHeight;
-
-        public bool usePerlin;
+        [Header("Perlin")]
         public float perlinScale;
 
         private bool[,,] _points;
@@ -40,7 +37,7 @@ namespace _Framework.VoxelMap
             _cubeMesh = new CubeMesh();
         }
 
-        private void Start()
+        public void GenerateTerrain()
         {
             _points = new bool[width + 1, height + 1, length + 1];
 
@@ -48,22 +45,12 @@ namespace _Framework.VoxelMap
             {
                 for (var k = 0; k < length + 1; k++)
                 {
-                    if (usePerlin)
+                    float noise = Mathf.PerlinNoise((float)i / (width * perlinScale),
+                        (float)k / (length * perlinScale));
+                    int perlinHeight = Mathf.RoundToInt(noise * height);
+                    for (var j = 0; j < perlinHeight + 1; j++)
                     {
-                        float noise = Mathf.PerlinNoise((float)i / (width * perlinScale),
-                            (float)k / (length * perlinScale));
-                        int perlinHeight = Mathf.RoundToInt(noise * height);
-                        for (var j = 0; j < perlinHeight + 1; j++)
-                        {
-                            _points[i, j, k] = true;
-                        }
-                    }
-                    else
-                    {
-                        for (var j = 0; j < fillHeight + 1; j++)
-                        {
-                            _points[i, j, k] = true;
-                        }
+                        _points[i, j, k] = true;
                     }
                 }
             }
@@ -154,7 +141,7 @@ namespace _Framework.VoxelMap
 
         private void GenerateMesh()
         {
-            var mesh = new Mesh { name = "Voxel World" };
+            var mesh = new Mesh { name = "Voxel Chunk" };
             mesh.CombineMeshes(_combineInstance);
             mesh.Optimize();
             mesh.RecalculateBounds();
@@ -167,10 +154,6 @@ namespace _Framework.VoxelMap
             Vector3 wireSize = new Vector3(width, height, length);
             Gizmos.color = Color.white;
             Gizmos.DrawWireCube(transform.position + wireSize/2f, wireSize);
-            if (Application.isPlaying) return;
-            Vector3 boxSize = new Vector3(width, fillHeight + 0.5f, length);
-            Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            Gizmos.DrawCube(transform.position + boxSize/2f, boxSize);
         }
     }
     
