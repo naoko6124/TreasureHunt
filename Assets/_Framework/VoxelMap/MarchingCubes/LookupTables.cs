@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace _Framework.MarchingCubes
+namespace _Framework.VoxelMap.MarchingCubes
 {
 	public static class LookupTables
 	{

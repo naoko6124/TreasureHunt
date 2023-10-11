@@ -1,20 +1,22 @@
-﻿using UnityEngine;
+﻿using _Framework.VoxelMap.MarchingCubes;
+using UnityEngine;
 using UnityEditor;
 using UnityEngine.Serialization;
 
 namespace _Framework.VoxelMap
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    public class VoxelWorld : MonoBehaviour
+    public class VoxelChunk : MonoBehaviour
     {
         [Header("Size")]
         public int width;
         public int height;
         public int length;
-        [Header("Fill")] public int fillHeight;
+        
+        [Header("Fill")]
+        public int fillHeight;
 
         private bool[,,] _points;
-
         public bool[,,] Points
         {
             get => _points;
@@ -23,7 +25,7 @@ namespace _Framework.VoxelMap
 
         private MeshFilter _meshFilter;
         private MeshCollider _meshCollider;
-        private MarchingCubes.CubeMesh _cubeMesh;
+        private CubeMesh _cubeMesh;
         private CombineInstance[] _combineInstance;
         private Camera _camera;
 
@@ -32,7 +34,7 @@ namespace _Framework.VoxelMap
             _camera = Camera.main;
             _meshFilter = GetComponent<MeshFilter>();
             _meshCollider = GetComponent<MeshCollider>();
-            _cubeMesh = new MarchingCubes.CubeMesh();
+            _cubeMesh = new CubeMesh();
         }
 
         private void Start()
@@ -114,6 +116,9 @@ namespace _Framework.VoxelMap
             if (i < 0 || j < 0 || k < 0) return;
             if (i > width - 1 || j > height - 1 || k > length - 1) return;
             
+            var cubePosition = new Vector3(0.5f + i, 0.5f + j, 0.5f + k);
+            _combineInstance[i * height * length + j * length + k].transform = Matrix4x4.Translate(cubePosition);
+            
             var cubeConfiguration = 0;
             if (_points[i, j, k]) cubeConfiguration += 1;
             if (_points[i + 1, j, k]) cubeConfiguration += 2;
@@ -123,22 +128,20 @@ namespace _Framework.VoxelMap
             if (_points[i + 1, j, k + 1]) cubeConfiguration += 32;
             if (_points[i, j + 1, k + 1]) cubeConfiguration += 64;
             if (_points[i + 1, j + 1, k + 1]) cubeConfiguration += 128;
-            _cubeMesh.CreateMesh(cubeConfiguration);
+
+            if (cubeConfiguration == 0 || cubeConfiguration == 255)
+                _cubeMesh.ClearMesh();
+            else            
+                _cubeMesh.CreateMesh(cubeConfiguration);
             _combineInstance[i * height * length + j * length + k].mesh = _cubeMesh.GeneratedMesh;
-            var cubePosition = transform.position + new Vector3(0.5f + i, 0.5f + j, 0.5f + k);
-            _combineInstance[i * height * length + j * length + k].transform = Matrix4x4.Translate(cubePosition);
         }
 
         private void GenerateMesh()
         {
             var mesh = new Mesh { name = "Voxel World" };
             mesh.CombineMeshes(_combineInstance);
-            //mesh.OptimizeReorderVertexBuffer();
-            //mesh.OptimizeIndexBuffers();
-            //mesh.Optimize();
-            mesh.RecalculateNormals();
-            //mesh.RecalculateBounds();
-            //mesh.RecalculateTangents();
+            mesh.Optimize();
+            mesh.RecalculateBounds();
             _meshFilter.mesh = mesh;
             _meshCollider.sharedMesh = mesh;
         }
