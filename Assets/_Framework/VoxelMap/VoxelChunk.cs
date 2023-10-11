@@ -12,9 +12,12 @@ namespace _Framework.VoxelMap
         public int width;
         public int height;
         public int length;
-        
+
         [Header("Fill")]
         public int fillHeight;
+
+        public bool usePerlin;
+        public float perlinScale;
 
         private bool[,,] _points;
         public bool[,,] Points
@@ -43,11 +46,24 @@ namespace _Framework.VoxelMap
 
             for (var i = 0; i < width + 1; i++)
             {
-                for (var j = 0; j < fillHeight + 1; j++)
+                for (var k = 0; k < length + 1; k++)
                 {
-                    for (var k = 0; k < length + 1; k++)
+                    if (usePerlin)
                     {
-                        _points[i, j, k] = true;
+                        float noise = Mathf.PerlinNoise((float)i / (width * perlinScale),
+                            (float)k / (length * perlinScale));
+                        int perlinHeight = Mathf.RoundToInt(noise * height);
+                        for (var j = 0; j < perlinHeight + 1; j++)
+                        {
+                            _points[i, j, k] = true;
+                        }
+                    }
+                    else
+                    {
+                        for (var j = 0; j < fillHeight + 1; j++)
+                        {
+                            _points[i, j, k] = true;
+                        }
                     }
                 }
             }

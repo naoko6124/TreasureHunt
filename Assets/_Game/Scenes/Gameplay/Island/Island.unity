@@ -159,6 +159,8 @@ MonoBehaviour:
   height: 8
   length: 100
   fillHeight: 4
+  usePerlin: 0
+  perlinScale: 0.25
 --- !u!64 &18840216
 MeshCollider:
   m_ObjectHideFlags: 0
