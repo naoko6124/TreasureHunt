@@ -1,0 +1,110 @@
+#pragma kernel BuildMesh
+#pragma kernel ClearUnused
+
+uint3 Size;
+uint Budget;
+
+StructuredBuffer<uint2> TriangleTable;
+StructuredBuffer<float> Voxels;
+RWStructuredBuffer<uint> Counter;
+
+RWByteAddressBuffer VertexBuffer;
+RWByteAddressBuffer IndexBuffer;
+
+uint EdgeIndexFromTriangleTable(uint2 data, uint index)
+{
+    return 0xfu & (index < 8 ? data.x >> ((index + 0) * 4) :
+                               data.y >> ((index - 8) * 4));
+}
+
+void WriteVertex(uint offset, float3 p, float3 n)
+{
+    uint addr_p = offset * 12 * 2;
+    uint addr_n = addr_p + 12;
+    VertexBuffer.Store3(addr_p, asuint(p));
+    VertexBuffer.Store3(addr_n, asuint(n));
+}
+
+void WriteIndices(uint offset, uint3 indices)
+{
+    IndexBuffer.Store3(offset * 4, indices);
+}
+
+float GetVoxelPoint(uint3 position)
+{
+    return Voxels[position.x + position.y * Size.x + position.z * Size.x * Size.y];
+}
+
+uint3 GetCubeVertex(uint index)
+{
+    bool x = index & 1;
+    bool y = index & 4;
+    bool z = index & 2;
+    if (index == 3 || index == 2 || index == 6 || index == 7)
+        return uint3(!x, y, z);
+    return uint3(x, y, z);
+}
+
+[numthreads(4,4,4)]
+void BuildMesh (uint3 id : SV_DispatchThreadID)
+{
+    if (any(id + 1 >= Size.xyz)) return;
+
+
+    bool samples[8];
+    for (uint i = 0; i < 8; i++)
+        samples[i] = GetVoxelPoint(id + GetCubeVertex(i)) > 0;
+
+    uint selector = 0;
+    for (i = 0; i < 8; i++)
+        selector |= samples[i] << i;
+    
+    if (selector == 0 || selector == 0xff) return;
+
+    uint2 tri_data = TriangleTable[selector];
+    float3 vertices[12];
+    vertices[2] = float3(0.0, -0.5, 0.5);
+    vertices[1] = float3(0.5, -0.5, 0.0);
+    vertices[0] = float3(0.0, -0.5, -0.5);
+    vertices[3] = float3(-0.5, -0.5, 0.0);
+    vertices[6] = float3(0.0, 0.5, 0.5);
+    vertices[5] = float3(0.5, 0.5, 0.0);
+    vertices[4] = float3(0.0, 0.5, -0.5);
+    vertices[7] = float3(-0.5, 0.5, 0.0);
+    vertices[11] = float3(-0.5, 0.0, 0.5);
+    vertices[10] = float3(0.5, 0.0, 0.5);
+    vertices[9] = float3(0.5, 0.0, -0.5);
+    vertices[8] = float3(-0.5, 0.0, -0.5);
+    
+    for (i = 0; i < 15; i += 3)
+    {
+        uint e1 = EdgeIndexFromTriangleTable(tri_data, i);
+        uint e2 = EdgeIndexFromTriangleTable(tri_data, i + 1);
+        uint e3 = EdgeIndexFromTriangleTable(tri_data, i + 2);
+        if (e1 == 15) return;
+
+        uint count = Counter.IncrementCounter();
+        if (count >= Budget) return;
+
+        uint vidx = count * 3;
+        WriteVertex(vidx + 0, vertices[e1] + id, vertices[e1] * 2 + id);
+        WriteVertex(vidx + 1, vertices[e2] + id, vertices[e2] * 2 + id);
+        WriteVertex(vidx + 2, vertices[e3] + id, vertices[e3] * 2 + id);
+        WriteIndices(vidx, uint3(vidx, vidx + 1, vidx + 2));
+    }
+}
+
+[numthreads(64, 1, 1)]
+void ClearUnused(uint id : SV_DispatchThreadID)
+{
+    while (true)
+    {
+        uint count = Counter.IncrementCounter();
+        if (count >= Budget) break;
+        uint vidx = count * 3;
+        WriteVertex(vidx + 0, 0, 0);
+        WriteVertex(vidx + 1, 0, 0);
+        WriteVertex(vidx + 2, 0, 0);
+        WriteIndices(vidx, uint3(0, 0, 0));
+    }
+}
