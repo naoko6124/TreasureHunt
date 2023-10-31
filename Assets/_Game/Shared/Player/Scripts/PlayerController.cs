@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace _Game.Shared.Player.Scripts
 {
@@ -6,7 +7,7 @@ namespace _Game.Shared.Player.Scripts
     public class PlayerController : MonoBehaviour
     {
         [Header("Movement")]
-        [SerializeField] private float moveSpeed = 3.0f;
+        [SerializeField] private float moveSpeed = 4.0f;
         [SerializeField] private float mouseSensitivity = 0.5f;
         [SerializeField] private float gravity = -1.0f;
         private Vector2 _moveInput;
@@ -16,19 +17,27 @@ namespace _Game.Shared.Player.Scripts
         [SerializeField] private Transform playerCamera;
         private CharacterController _characterController;
         private PlayerActions _playerActions;
+        private Camera _camera;
+
         
-        private void Awake()
+        [Header("Chest")]
+        [SerializeField] private ChestCollector chestCollector;
+
+        private void OnEnable()
         {
             _characterController = GetComponent<CharacterController>();
             _playerActions = new PlayerActions();
             _playerActions.Enable();
-        }
-
-        private void Start()
-        {
+            _playerActions.Chest.Collect.performed += Collect;
+            _camera = Camera.main;
             Cursor.lockState = CursorLockMode.Locked;
         }
-        
+
+        private void OnDisable()
+        {
+            _playerActions.Disable();
+        }
+
         private void Update()
         {
             _moveInput = _playerActions.Character.Movement.ReadValue<Vector2>();
@@ -45,6 +54,19 @@ namespace _Game.Shared.Player.Scripts
             cameraRot -= _cameraInput.y * mouseSensitivity * Time.deltaTime;
             cameraRot = Mathf.Clamp(cameraRot, -90f, 90f);
             playerCamera.localRotation = Quaternion.Euler(cameraRot, 0f, 0f);
+        }
+
+        private void Collect(InputAction.CallbackContext context)
+        {
+            var ray = _camera.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out var hit, 100.0f))
+            {
+                if (hit.transform.CompareTag("Chest"))
+                {
+                    chestCollector.IncreaseChest();
+                    Destroy(hit.transform.gameObject);
+                }
+            }
         }
     }
 }

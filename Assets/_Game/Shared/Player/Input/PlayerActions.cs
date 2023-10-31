@@ -114,6 +114,62 @@ public partial class @PlayerActions : IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": true
                 }
             ]
+        },
+        {
+            ""name"": ""Chest"",
+            ""id"": ""82792b9e-441d-48ec-bb18-63566e26b389"",
+            ""actions"": [
+                {
+                    ""name"": ""Collect"",
+                    ""type"": ""Button"",
+                    ""id"": ""fc5f067a-e9b9-4588-b1ee-7e0f93260dc5"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""a0e6247b-7599-4577-9ae9-00a6dc655a32"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Collect"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""World"",
+            ""id"": ""a335af31-a066-448c-8118-dadd9406aed1"",
+            ""actions"": [
+                {
+                    ""name"": ""Dig"",
+                    ""type"": ""Button"",
+                    ""id"": ""9c537d68-c857-43be-840b-064d619b6517"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""e0437ac7-d1ed-47ef-a876-c62b96eac8d2"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Dig"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -122,6 +178,12 @@ public partial class @PlayerActions : IInputActionCollection2, IDisposable
         m_Character = asset.FindActionMap("Character", throwIfNotFound: true);
         m_Character_Movement = m_Character.FindAction("Movement", throwIfNotFound: true);
         m_Character_Camera = m_Character.FindAction("Camera", throwIfNotFound: true);
+        // Chest
+        m_Chest = asset.FindActionMap("Chest", throwIfNotFound: true);
+        m_Chest_Collect = m_Chest.FindAction("Collect", throwIfNotFound: true);
+        // World
+        m_World = asset.FindActionMap("World", throwIfNotFound: true);
+        m_World_Dig = m_World.FindAction("Dig", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -218,9 +280,83 @@ public partial class @PlayerActions : IInputActionCollection2, IDisposable
         }
     }
     public CharacterActions @Character => new CharacterActions(this);
+
+    // Chest
+    private readonly InputActionMap m_Chest;
+    private IChestActions m_ChestActionsCallbackInterface;
+    private readonly InputAction m_Chest_Collect;
+    public struct ChestActions
+    {
+        private @PlayerActions m_Wrapper;
+        public ChestActions(@PlayerActions wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Collect => m_Wrapper.m_Chest_Collect;
+        public InputActionMap Get() { return m_Wrapper.m_Chest; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(ChestActions set) { return set.Get(); }
+        public void SetCallbacks(IChestActions instance)
+        {
+            if (m_Wrapper.m_ChestActionsCallbackInterface != null)
+            {
+                @Collect.started -= m_Wrapper.m_ChestActionsCallbackInterface.OnCollect;
+                @Collect.performed -= m_Wrapper.m_ChestActionsCallbackInterface.OnCollect;
+                @Collect.canceled -= m_Wrapper.m_ChestActionsCallbackInterface.OnCollect;
+            }
+            m_Wrapper.m_ChestActionsCallbackInterface = instance;
+            if (instance != null)
+            {
+                @Collect.started += instance.OnCollect;
+                @Collect.performed += instance.OnCollect;
+                @Collect.canceled += instance.OnCollect;
+            }
+        }
+    }
+    public ChestActions @Chest => new ChestActions(this);
+
+    // World
+    private readonly InputActionMap m_World;
+    private IWorldActions m_WorldActionsCallbackInterface;
+    private readonly InputAction m_World_Dig;
+    public struct WorldActions
+    {
+        private @PlayerActions m_Wrapper;
+        public WorldActions(@PlayerActions wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Dig => m_Wrapper.m_World_Dig;
+        public InputActionMap Get() { return m_Wrapper.m_World; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(WorldActions set) { return set.Get(); }
+        public void SetCallbacks(IWorldActions instance)
+        {
+            if (m_Wrapper.m_WorldActionsCallbackInterface != null)
+            {
+                @Dig.started -= m_Wrapper.m_WorldActionsCallbackInterface.OnDig;
+                @Dig.performed -= m_Wrapper.m_WorldActionsCallbackInterface.OnDig;
+                @Dig.canceled -= m_Wrapper.m_WorldActionsCallbackInterface.OnDig;
+            }
+            m_Wrapper.m_WorldActionsCallbackInterface = instance;
+            if (instance != null)
+            {
+                @Dig.started += instance.OnDig;
+                @Dig.performed += instance.OnDig;
+                @Dig.canceled += instance.OnDig;
+            }
+        }
+    }
+    public WorldActions @World => new WorldActions(this);
     public interface ICharacterActions
     {
         void OnMovement(InputAction.CallbackContext context);
         void OnCamera(InputAction.CallbackContext context);
+    }
+    public interface IChestActions
+    {
+        void OnCollect(InputAction.CallbackContext context);
+    }
+    public interface IWorldActions
+    {
+        void OnDig(InputAction.CallbackContext context);
     }
 }

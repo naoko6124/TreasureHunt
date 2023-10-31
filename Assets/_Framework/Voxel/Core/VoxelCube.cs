@@ -33,12 +33,19 @@ public class VoxelCube : MonoBehaviour
     {
         meshFilter = GetComponent<MeshFilter>();
         meshCollider = GetComponent<MeshCollider>();
+        meshCollider.enabled = false;
         ConfigureMesh(budget);
         FillVoxels(0);
 
         meshFilter.mesh = mesh;
+        meshCollider.sharedMesh = mesh;
 
         RegenerateTerrain();
+
+        Physics.BakeMesh(mesh.GetInstanceID(), false);
+
+        Debug.Log(mesh.GetIndexCount(0));
+        Debug.Log(mesh.GetSubMesh(0).vertexCount);
     }
 
     private void OnDisable()
@@ -59,6 +66,14 @@ public class VoxelCube : MonoBehaviour
 
         counterBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Counter);
         counterBuffer.SetCounterValue(0);
+        
+        voxelShader.SetBuffer(1, "VertexBuffer", vertexBuffer);
+        voxelShader.SetBuffer(1, "IndexBuffer", indexBuffer);
+        voxelShader.SetBuffer(1, "Counter", counterBuffer);
+        voxelShader.Dispatch(1, 1, 1, 1);
+
+        Debug.Log($"Counter: {counterBuffer.count}");
+        counterBuffer.SetCounterValue(0);
 
         voxelShader.SetInts("Size", new int[] {width, height, length});
         voxelShader.SetInt("Budget", budget);
@@ -68,22 +83,10 @@ public class VoxelCube : MonoBehaviour
         voxelShader.SetBuffer(0, "VertexBuffer", vertexBuffer);
         voxelShader.SetBuffer(0, "IndexBuffer", indexBuffer);
         voxelShader.Dispatch(0, width, height, length);
-
-        voxelShader.SetBuffer(1, "VertexBuffer", vertexBuffer);
-        voxelShader.SetBuffer(1, "IndexBuffer", indexBuffer);
-        voxelShader.SetBuffer(1, "Counter", counterBuffer);
-        voxelShader.Dispatch(1, 1, 1, 1);
         
         voxelsBuffer.Dispose();
         triangleBuffer.Dispose();
         counterBuffer.Dispose();
-    }
-
-    private void TestColl()
-    {
-        Debug.Log(mesh.GetIndexCount(0));
-        Debug.Log(mesh.GetSubMesh(0).vertexCount);
-        //meshCollider.sharedMesh = meshFilter.mesh;
     }
 
     private void ConfigureMesh(int budget)
@@ -104,6 +107,9 @@ public class VoxelCube : MonoBehaviour
 
         vertexBuffer = mesh.GetVertexBuffer(0);
         indexBuffer = mesh.GetIndexBuffer();
+
+        vertexBuffer.SetData(new Vector3[] {});
+        indexBuffer.SetData(new int[] {});
 
         mesh.bounds = new Bounds(new Vector3(width/2, height/2, length/2), new Vector3(width, height, length));
     }

@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.Serialization;
+using UnityEngine.InputSystem;
 
 namespace _Framework.VoxelMap
 {
@@ -32,16 +33,15 @@ namespace _Framework.VoxelMap
         private CombineInstance[] _combineInstance;
         private Camera _camera;
 
-        private void Awake()
+        private PlayerActions _playerActions;
+
+        private void OnEnable()
         {
             _camera = Camera.main;
             _meshFilter = GetComponent<MeshFilter>();
             _meshCollider = GetComponent<MeshCollider>();
             _cubeMesh = new CubeMesh();
-        }
-
-        private void Start()
-        {
+            
             _points = new bool[width + 1, height + 1, length + 1];
 
             for (var i = 0; i < width + 1; i++)
@@ -69,37 +69,52 @@ namespace _Framework.VoxelMap
             }
 
             RecalculateChunk();
+
+            _playerActions = new PlayerActions();
+            _playerActions.Enable();
+            _playerActions.World.Dig.performed += Dig;
         }
 
-        private void Update()
+        private void OnDisable()
         {
-            if (Input.GetMouseButtonDown(0))
+            _playerActions.Disable();
+        }
+
+        private void Dig(InputAction.CallbackContext context)
+        {
+            var ray = _camera.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out var hit, 5.0f))
             {
-                var ray = _camera.ScreenPointToRay(Input.mousePosition);
-                if (Physics.Raycast(ray, out var hit, 100.0f))
+                if (hit.transform.CompareTag("World"))
                 {
+                    Debug.DrawLine(ray.origin, hit.point);
                     var cameraLook = _camera.transform.forward;
                     var x = cameraLook.x > 0 ? Mathf.RoundToInt(hit.point.x - transform.position.x + 0.1f) : Mathf.RoundToInt(hit.point.x - transform.position.x - 0.1f);
                     var y = cameraLook.y > 0 ? Mathf.RoundToInt(hit.point.y - transform.position.y + 0.1f) : Mathf.RoundToInt(hit.point.y - transform.position.y - 0.1f);
                     var z = cameraLook.z > 0 ? Mathf.RoundToInt(hit.point.z - transform.position.z + 0.1f) : Mathf.RoundToInt(hit.point.z - transform.position.z - 0.1f);
+                    Debug.Log($"HitPoint: {hit.point.x}, {hit.point.y}, {hit.point.z}\nDigPoint: {x}, {y}, {z}");
                     _points[x, y, z] = false;
                     UpdatePoint(x, y, z);
                 }
             }
-            if (Input.GetMouseButtonDown(1))
-            {
-                var ray = _camera.ScreenPointToRay(Input.mousePosition);
-                if (Physics.Raycast(ray, out var hit, 100.0f))
-                {
-                    var cameraLook = _camera.transform.forward;
-                    var x = cameraLook.x <= 0 ? Mathf.RoundToInt(hit.point.x - transform.position.x + 0.1f) : Mathf.RoundToInt(hit.point.x - transform.position.x - 0.1f);
-                    var y = cameraLook.y <= 0 ? Mathf.RoundToInt(hit.point.y - transform.position.y + 0.1f) : Mathf.RoundToInt(hit.point.y - transform.position.y - 0.1f);
-                    var z = cameraLook.z <= 0 ? Mathf.RoundToInt(hit.point.z - transform.position.z + 0.1f) : Mathf.RoundToInt(hit.point.z - transform.position.z - 0.1f);
-                    _points[x, y, z] = true;
-                    UpdatePoint(x, y, z);
-                }
-            }
         }
+
+        // private void Update()
+        // {
+        //     if (Input.GetMouseButtonDown(1))
+        //     {
+        //         var ray = _camera.ScreenPointToRay(Input.mousePosition);
+        //         if (Physics.Raycast(ray, out var hit, 100.0f))
+        //         {
+        //             var cameraLook = _camera.transform.forward;
+        //             var x = cameraLook.x <= 0 ? Mathf.RoundToInt(hit.point.x - transform.position.x + 0.1f) : Mathf.RoundToInt(hit.point.x - transform.position.x - 0.1f);
+        //             var y = cameraLook.y <= 0 ? Mathf.RoundToInt(hit.point.y - transform.position.y + 0.1f) : Mathf.RoundToInt(hit.point.y - transform.position.y - 0.1f);
+        //             var z = cameraLook.z <= 0 ? Mathf.RoundToInt(hit.point.z - transform.position.z + 0.1f) : Mathf.RoundToInt(hit.point.z - transform.position.z - 0.1f);
+        //             _points[x, y, z] = true;
+        //             UpdatePoint(x, y, z);
+        //         }
+        //     }
+        // }
 
         public void UpdatePoint(int x, int y, int z)
         {
@@ -131,10 +146,10 @@ namespace _Framework.VoxelMap
         {
             if (i < 0 || j < 0 || k < 0) return;
             if (i > width - 1 || j > height - 1 || k > length - 1) return;
-            
+
             var cubePosition = new Vector3(0.5f + i, 0.5f + j, 0.5f + k);
             _combineInstance[i * height * length + j * length + k].transform = Matrix4x4.Translate(cubePosition);
-            
+
             var cubeConfiguration = 0;
             if (_points[i, j, k]) cubeConfiguration += 1;
             if (_points[i + 1, j, k]) cubeConfiguration += 2;
@@ -147,7 +162,7 @@ namespace _Framework.VoxelMap
 
             if (cubeConfiguration == 0 || cubeConfiguration == 255)
                 _cubeMesh.ClearMesh();
-            else            
+            else
                 _cubeMesh.CreateMesh(cubeConfiguration);
             _combineInstance[i * height * length + j * length + k].mesh = _cubeMesh.GeneratedMesh;
         }
@@ -166,14 +181,14 @@ namespace _Framework.VoxelMap
         {
             Vector3 wireSize = new Vector3(width, height, length);
             Gizmos.color = Color.white;
-            Gizmos.DrawWireCube(transform.position + wireSize/2f, wireSize);
+            Gizmos.DrawWireCube(transform.position + wireSize / 2f, wireSize);
             if (Application.isPlaying) return;
             Vector3 boxSize = new Vector3(width, fillHeight + 0.5f, length);
             Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            Gizmos.DrawCube(transform.position + boxSize/2f, boxSize);
+            Gizmos.DrawCube(transform.position + boxSize / 2f, boxSize);
         }
     }
-    
+
     /*[CustomEditor(typeof(VoxelWorld))]
     public class VoxelEditor : Editor
     {

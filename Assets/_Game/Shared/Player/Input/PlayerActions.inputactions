@@ -92,6 +92,62 @@
                     "isPartOfComposite": true
                 }
             ]
+        },
+        {
+            "name": "Chest",
+            "id": "82792b9e-441d-48ec-bb18-63566e26b389",
+            "actions": [
+                {
+                    "name": "Collect",
+                    "type": "Button",
+                    "id": "fc5f067a-e9b9-4588-b1ee-7e0f93260dc5",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "a0e6247b-7599-4577-9ae9-00a6dc655a32",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Collect",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "World",
+            "id": "a335af31-a066-448c-8118-dadd9406aed1",
+            "actions": [
+                {
+                    "name": "Dig",
+                    "type": "Button",
+                    "id": "9c537d68-c857-43be-840b-064d619b6517",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "e0437ac7-d1ed-47ef-a876-c62b96eac8d2",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Dig",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": []

@@ -81,7 +81,7 @@ void BuildMesh (uint3 id : SV_DispatchThreadID)
         uint e1 = EdgeIndexFromTriangleTable(tri_data, i);
         uint e2 = EdgeIndexFromTriangleTable(tri_data, i + 1);
         uint e3 = EdgeIndexFromTriangleTable(tri_data, i + 2);
-        if (e1 == 15) return;
+        if (e1 == 15 || e2 == 15 || e3 == 15) return;
 
         uint count = Counter.IncrementCounter();
         if (count >= Budget) return;
@@ -101,10 +101,10 @@ void ClearUnused(uint id : SV_DispatchThreadID)
     {
         uint count = Counter.IncrementCounter();
         if (count >= Budget) break;
-        uint vidx = count * 3;
-        WriteVertex(vidx + 0, 0, 0);
-        WriteVertex(vidx + 1, 0, 0);
-        WriteVertex(vidx + 2, 0, 0);
+        uint vidx = (count) * 3;
+        WriteVertex(vidx + 0, float3(0, 0, 0), float3(0, 0, 0));
+        WriteVertex(vidx + 1, float3(0, 0, 0), float3(0, 0, 0));
+        WriteVertex(vidx + 2, float3(0, 0, 0), float3(0, 0, 0));
         WriteIndices(vidx, uint3(0, 0, 0));
     }
 }
